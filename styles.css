@@ -264,3 +264,64 @@ body {
   font-size: 1.05rem;
   margin: 28px 0 20px;
 }
+
+/* Container de Drop Ajustado para Posicionamento do X */
+.file-drop-area {
+  position: relative;
+}
+
+/* Botão X Pequeno no Canto Superior do Drop Area */
+.remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.remove-btn:hover {
+  background-color: #b91c1c;
+  transform: scale(1.1);
+}
+
+/* Container de Preview do Vídeo */
+.video-preview-wrapper {
+  position: relative;
+  margin-top: 1rem;
+}
+
+/* Botão de Remover acima do Player de Vídeo */
+.remove-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.remove-preview-btn:hover {
+  background-color: #fecaca;
+  color: #b91c1c;
+}
