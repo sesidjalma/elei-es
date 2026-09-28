@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELEIÇÕES CRI 2026 - Inscrições</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Faixa colorida superior -->
+  <div class="top-bar">
+    <div class="bar-green"></div>
+    <div class="bar-yellow"></div>
+    <div class="bar-blue"></div>
+    <div class="bar-red"></div>
+  </div>
+
+  <!-- Barra de Navegação -->
+  <nav class="navbar">
+    <a href="#" class="nav-brand">
+      <img src="LOGO DOURADA CRI.png" alt="Logo do Clube" class="brand-logo">
+      <div class="brand-text">
+        <h1>Clube de Relações Internacionais</h1>
+        <span>Escola Sesi Djalma Pessoa</span>
+      </div>
+    </a>
+  </nav>
+
+  <!-- Container Principal do Formulário -->
+  <main class="form-container">
+    
+    <!-- Bloco 0: Cabeçalho -->
+<div class="form-header-card">
+  <h1>ELEIÇÕES CRI 2026</h1>
+
+  <p class="texto-eleicoes">
+    Chegou o momento de se candidatar aos cargos do Secretariado do CRI Piatã!
+  </p>
+
+  <p class="texto-eleicoes">
+    Mais do que ocupar uma posição, fazer parte do Secretariado é assumir o compromisso
+    de cuidar, construir e deixar sua própria marca em uma <em>casa</em> que há tantos anos
+    cresce através das pessoas que acreditam nela.
+  </p>
+
+  <p class="texto-eleicoes">
+    As eleições são um espaço de participação, responsabilidade e, acima de tudo, confiança.
+    É a oportunidade de apresentar suas ideias, ouvir outras perspectivas e pensar no CRI que
+    queremos construir juntos para os próximos anos.
+  </p>
+
+  <p class="texto-eleicoes">
+    Antes de realizar sua inscrição, leia atentamente a <strong>Cartilha das Eleições</strong>.
+    Nela, você encontrará todas as informações necessárias sobre os deveres de cada cargo.
+  </p>
+
+  <p class="texto-eleicoes destaque-final">
+    O próximo capítulo da nossa história pode ser escrito por você. 🤍
+  </p>
+
+  <p class="texto-eleicoes">
+    Acesse a cartilha pelo link abaixo antes de prosseguir com sua inscrição:
+    <a href="https://docs.google.com/document/d/1O6TbRdz8p8E3lfQPMCCmw6Pmt4C9-y8QHFEbaXYimGc/edit?usp=sharing" target="_blank">Cartilha das Eleições.</a>
+  </p>
+</div>
+
+    <form id="candidatura-form">
+      
+      <!-- Bloco 1: Nome Completo -->
+      <div class="form-card">
+        <label for="fullname">Informe seu nome completo: <span class="required">*</span></label>
+        <input type="text" id="fullname" name="fullname" placeholder="Digite seu nome completo" required />
+      </div>
+
+      <!-- Bloco 2: Seriado -->
+      <div class="form-card">
+        <label for="series">Insira seu seriado: <span class="required">*</span></label>
+           <input type="text" id="series" name="series" placeholder="Digite seu seriado (Ex.: 1º L, IFTP)" required />
+        </select>
+      </div>
+
+      <!-- Bloco 3: Cargo Pretendido -->
+      <div class="form-card">
+        <label for="role">Cargo ao qual está se candidatando: <span class="required">*</span></label>
+        <select id="role" name="role" required>
+          <option value="" disabled selected>Selecione o cargo</option>
+          <option value="presidente">Presidente</option>
+          <option value="vice_presidente">Vice-Presidente</option>
+          <option value="administrativo">Administrativo(a)</option>
+          <option value="marketing">Marketing</option>
+          <option value="chefe_ac">Chefe da Agência de Comunicação (AC)</option>
+        </select>
+      </div>
+
+      <!-- Bloco 4: Upload do Vídeo -->
+      <div class="form-card">
+        <label>Vídeo de Candidatura: <span class="required">*</span></label>
+        <div class="file-drop-area">
+          <span class="file-icon">📹</span>
+          <span class="file-msg" id="file-msg">Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)</span>
+          <input type="file" id="video-file" name="video" accept="video/mp4,video/quicktime,video/webm" required />
+        </div>
+        <video id="video-preview" controls></video>
+      </div>
+
+      <!-- Botão de Envio -->
+      <button type="submit" class="submit-btn">Enviar Candidatura</button>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
