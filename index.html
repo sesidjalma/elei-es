@@ -95,18 +95,24 @@
       </div>
 
       <!-- Bloco 4: Upload do Vídeo -->
-      <div class="form-card">
-        <label>Vídeo de Candidatura: <span class="required">*</span></label>
-        <div class="file-drop-area">
-          <span class="file-icon">📹</span>
-          <span class="file-msg" id="file-msg">Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)</span>
-          <input type="file" id="video-file" name="video" accept="video/mp4,video/quicktime,video/webm" required />
-        </div>
-        <video id="video-preview" controls></video>
-      </div>
+<div class="form-card">
+  <label>Vídeo de Candidatura: <span class="required">*</span></label>
+  
+  <div class="file-drop-area" id="file-drop-area">
+    <span class="file-icon">📹</span>
+    <span class="file-msg" id="file-msg">Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)</span>
+    <input type="file" id="video-file" name="video" accept="video/mp4,video/quicktime,video/webm" required />
+    
+    <!-- Botão X no Card de Upload -->
+    <button type="button" class="remove-btn" id="remove-video-btn" title="Remover vídeo" style="display: none;">&times;</button>
+  </div>
 
-      <!-- Botão de Envio -->
-      <button type="submit" class="submit-btn">Enviar Candidatura</button>
+  <!-- Container de Preview com o X para remover -->
+  <div class="video-preview-wrapper" id="video-preview-wrapper" style="display: none;">
+    <button type="button" class="remove-preview-btn" id="remove-preview-btn" title="Remover vídeo">&times; Remover vídeo</button>
+    <video id="video-preview" controls></video>
+  </div>
+</div>
     </form>
   </main>
 
