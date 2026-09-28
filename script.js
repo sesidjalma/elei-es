@@ -32,28 +32,54 @@ document.addEventListener('DOMContentLoaded', () => {
   verificarPrazo();
 });
 
-// Elementos do DOM
+// Elementos do DOM (ATUALIZADOS COM OS BOTÕES DE REMOVER)
 const fileInput = document.getElementById('video-file');
 const fileMsg = document.getElementById('file-msg');
 const videoPreview = document.getElementById('video-preview');
+const videoPreviewWrapper = document.getElementById('video-preview-wrapper');
+const removeVideoBtn = document.getElementById('remove-video-btn');
+const removePreviewBtn = document.getElementById('remove-preview-btn');
 const form = document.getElementById('candidatura-form');
 
 // URL GERADA NA IMPLANTAÇÃO DO GOOGLE APPS SCRIPT
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzGt5CZM5_qGSp8eG2zCUjmfgkrpjwnc7OH-ZNHoMbrEXOX5NpjY88CjZoT6-pLg8W1/exec';
 
-// Atualiza a mensagem e gera o preview ao escolher o vídeo
+// Função para limpar e remover o vídeo selecionado
+function removerVideo() {
+  if (fileInput) fileInput.value = ''; // Reseta o input de arquivo
+  if (fileMsg) fileMsg.textContent = 'Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)';
+  if (videoPreview) videoPreview.src = '';
+  if (videoPreviewWrapper) videoPreviewWrapper.style.display = 'none';
+  if (removeVideoBtn) removeVideoBtn.style.display = 'none';
+}
+
+// Evento ao selecionar um arquivo
 if (fileInput) {
   fileInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
-      fileMsg.textContent = `Arquivo selecionado: ${file.name}`;
+      fileMsg.textContent = `Arquivo selecionado: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
       const fileURL = URL.createObjectURL(file);
       videoPreview.src = fileURL;
-      videoPreview.style.display = 'block';
+      if (videoPreviewWrapper) videoPreviewWrapper.style.display = 'block';
+      if (removeVideoBtn) removeVideoBtn.style.display = 'flex';
     } else {
-      fileMsg.textContent = 'Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)';
-      videoPreview.style.display = 'none';
+      removerVideo();
     }
+  });
+}
+
+// Eventos de clique nos botões "X"
+if (removeVideoBtn) {
+  removeVideoBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); // Evita reabrir o seletor de arquivos
+    removerVideo();
+  });
+}
+
+if (removePreviewBtn) {
+  removePreviewBtn.addEventListener('click', function(e) {
+    removerVideo();
   });
 }
 
@@ -112,8 +138,7 @@ if (form) {
       if (result.status === 'success') {
         alert('Candidatura enviada e vídeo salvo com sucesso no Drive!');
         form.reset();
-        videoPreview.style.display = 'none';
-        fileMsg.textContent = 'Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)';
+        removerVideo(); // Reseta o estado visual do vídeo enviado
       } else {
         alert('Erro ao enviar para o Drive: ' + result.message);
       }
