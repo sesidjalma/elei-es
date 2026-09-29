@@ -51,7 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
-        if (fileMsg) fileMsg.textContent = `Arquivo selecionado: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        
+        // Alerta de arquivo muito pesado (Limite de 35 MB para o Apps Script)
+        if (file.size > 35 * 1024 * 1024) {
+          alert(`O vídeo selecionado tem ${sizeMB} MB e excede o limite do sistema (máx. 35 MB).\n\nPara enviar rápido:\n1. Grave em resolução 720p (HD) no celular.\n2. Ou use um compressor de vídeo gratuito no celular/PC.`);
+          removerVideo();
+          return;
+        }
+
+        if (fileMsg) fileMsg.textContent = `Arquivo selecionado: ${file.name} (${sizeMB} MB) - Pronto para envio!`;
         const fileURL = URL.createObjectURL(file);
         if (videoPreview) videoPreview.src = fileURL;
         if (videoPreviewWrapper) videoPreviewWrapper.style.display = 'block';
@@ -93,14 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'A preparar vídeo... Aguarde';
+      submitBtn.textContent = 'A otimizar vídeo para envio...';
 
       try {
         const base64Video = await fileToBase64(file);
 
-        submitBtn.textContent = 'A enviar candidatura e vídeo... Pode demorar alguns segundos.';
+        submitBtn.textContent = 'A enviar dados e vídeo... Aguarde alguns segundos.';
 
-        // Utilização de URLSearchParams para envio nativo compatível com Apps Script
         const formData = new URLSearchParams();
         formData.append('fullname', document.getElementById('fullname').value);
         formData.append('series', document.getElementById('series').value);
@@ -127,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         console.error(err);
-        alert('Ocorreu um erro no envio. Verifique a sua ligação e tente novamente.');
+        alert('Erro no envio. Verifique a sua conexão e tente um vídeo menor que 30MB.');
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar Candidatura';
