@@ -1,9 +1,7 @@
-// Data limite: 01 de Outubro de 2026 às 00:00:00
 const DATA_LIMITE = new Date('2026-10-01T00:00:00');
 
 function verificarPrazo() {
   const agora = new Date();
-
   if (agora >= DATA_LIMITE) {
     const formContainer = document.querySelector('.form-container');
     if (formContainer) {
@@ -12,9 +10,6 @@ function verificarPrazo() {
           <h1 style="color: #dc2626;">Inscrições Encerradas! 🔒</h1>
           <p style="margin-top: 1rem; font-size: 1.05rem;">
             O prazo para envio de candidaturas para as <strong>Eleições CRI 2026</strong> se encerrou no dia <strong>30/09/2026 às 23:59</strong>.
-          </p>
-          <p style="margin-top: 0.8rem; color: #64748b;">
-            Agradecemos a todos os candidatos participantes!
           </p>
         </div>
       `;
@@ -52,15 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = e.target.files[0];
       if (file) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        
-        // Alerta de arquivo muito pesado (Limite de 35 MB para o Apps Script)
-        if (file.size > 35 * 1024 * 1024) {
-          alert(`O vídeo selecionado tem ${sizeMB} MB e excede o limite do sistema (máx. 35 MB).\n\nPara enviar rápido:\n1. Grave em resolução 720p (HD) no celular.\n2. Ou use um compressor de vídeo gratuito no celular/PC.`);
-          removerVideo();
-          return;
-        }
-
-        if (fileMsg) fileMsg.textContent = `Arquivo selecionado: ${file.name} (${sizeMB} MB) - Pronto para envio!`;
+        if (fileMsg) fileMsg.textContent = `Arquivo selecionado: ${file.name} (${sizeMB} MB)`;
         const fileURL = URL.createObjectURL(file);
         if (videoPreview) videoPreview.src = fileURL;
         if (videoPreviewWrapper) videoPreviewWrapper.style.display = 'block';
@@ -71,27 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (removeVideoBtn) {
-    removeVideoBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      removerVideo();
-    });
-  }
-
-  if (removePreviewBtn) {
-    removePreviewBtn.addEventListener('click', function(e) {
-      removerVideo();
-    });
-  }
+  if (removeVideoBtn) removeVideoBtn.addEventListener('click', (e) => { e.stopPropagation(); removerVideo(); });
+  if (removePreviewBtn) removePreviewBtn.addEventListener('click', removerVideo);
 
   if (form) {
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      if (!verificarPrazo()) {
-        alert('O prazo de inscrições expirou!');
-        return;
-      }
+      if (!verificarPrazo()) return;
 
       const submitBtn = form.querySelector('.submit-btn');
       const file = fileInput ? fileInput.files[0] : null;
@@ -102,51 +76,94 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'A otimizar vídeo para envio...';
+      submitBtn.textContent = 'A preparar envio direto...';
 
       try {
-        const base64Video = await fileToBase64(file);
+        const fullname = document.getElementById('fullname').value;
+        const series = document.getElementById('series').value;
+        const role = document.getElementById('role').value;
 
-        submitBtn.textContent = 'A enviar dados e vídeo... Aguarde alguns segundos.';
-
-        const formData = new URLSearchParams();
-        formData.append('fullname', document.getElementById('fullname').value);
-        formData.append('series', document.getElementById('series').value);
-        formData.append('role', document.getElementById('role').value);
-        formData.append('videoName', file.name);
-        formData.append('mimeType', file.type || 'video/mp4');
-        formData.append('videoData', base64Video);
-
-        const response = await fetch(SCRIPT_URL, {
+        // 1. Solicita a URL de envio direto
+        const initRes = await fetch(SCRIPT_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body: formData.toString()
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'getUploadUrl',
+            fullname: fullname,
+            role: role,
+            videoName: file.name,
+            mimeType: file.type || 'video/mp4'
+          })
         });
 
-        const result = await response.json();
+        const initData = await initRes.json();
+        if (initData.status === 'error') throw new Error(initData.message);
 
-        if (result.status === 'success') {
+        const uploadUrl = initData.uploadUrl;
+
+        // 2. Envia o vídeo em blocos (Chunks de 5MB)
+        const chunkSize = 5 * 1024 * 1024;
+        let start = 0;
+        let driveFileId = null;
+
+        while (start < file.size) {
+          const end = Math.min(start + chunkSize, file.size);
+          const chunk = file.slice(start, end);
+          const percent = Math.round((start / file.size) * 100);
+
+          submitBtn.textContent = `A enviar vídeo: ${percent}%`;
+
+          const response = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Range': `bytes ${start}-${end - 1}/${file.size}`
+            },
+            body: chunk
+          });
+
+          if (response.status === 200 || response.status === 201) {
+            const resData = await response.json();
+            driveFileId = resData.id;
+            break;
+          } else if (response.status !== 308) {
+            throw new Error('Erro ao transmitir o vídeo. Status: ' + response.status);
+          }
+
+          start = end;
+        }
+
+        submitBtn.textContent = 'A finalizar registo...';
+
+        // 3. Registar o envio e disparar o e-mail
+        const finalRes = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'finalizeUpload',
+            fileId: driveFileId,
+            fullname: fullname,
+            series: series,
+            role: role
+          })
+        });
+
+        const finalData = await finalRes.json();
+
+        if (finalData.status === 'success') {
           alert('Candidatura e vídeo enviados com sucesso!');
           form.reset();
           removerVideo();
         } else {
-          alert('Erro no servidor: ' + result.message);
+          throw new Error(finalData.message);
         }
 
       } catch (err) {
         console.error(err);
-        alert('Erro no envio. Verifique a sua conexão e tente um vídeo menor que 30MB.');
+        alert('Erro no envio: ' + err.message);
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar Candidatura';
       }
     });
   }
-});
-
-const fileToBase64 = file => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => resolve(reader.result.split(',')[1]);
-  reader.onerror = error => reject(error);
 });
