@@ -325,3 +325,63 @@ body {
   background-color: #fecaca;
   color: #b91c1c;
 }
+
+/* Estilo do Botão Enviar Candidatura */
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #142947;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 1rem;
+}
+
+.submit-btn:hover {
+  background-color: #0f1f35;
+}
+
+.submit-btn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Estilo do Botão X de remoção */
+.file-drop-area {
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-preview-btn {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
