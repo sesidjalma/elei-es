@@ -93,92 +93,53 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Iniciando conexão super rápida...';
+      submitBtn.textContent = 'Processando vídeo para envio...';
 
       try {
-        const fullname = document.getElementById('fullname').value;
-        const series = document.getElementById('series').value;
-        const role = document.getElementById('role').value;
+        // Converte o vídeo para Base64 de forma eficiente
+        const base64Video = await fileToBase64(file);
 
-        // STEP 1: Solicita URL de upload direto ao Apps Script
-        const initResponse = await fetch(SCRIPT_URL, {
+        submitBtn.textContent = 'Enviando candidatura e vídeo... Aguarde.';
+
+        const payload = {
+          fullname: document.getElementById('fullname').value,
+          series: document.getElementById('series').value,
+          role: document.getElementById('role').value,
+          videoName: file.name,
+          mimeType: file.type || 'video/mp4',
+          videoData: base64Video
+        };
+
+        const response = await fetch(SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'getUploadUrl',
-            fullname: fullname,
-            role: role,
-            videoName: file.name,
-            mimeType: file.type || 'video/mp4'
-          })
+          body: JSON.stringify(payload)
         });
 
-        const initResult = await initResponse.json();
+        const result = await response.json();
 
-        if (initResult.status === 'error') {
-          throw new Error(initResult.message);
+        if (result.status === 'success') {
+          alert('Candidatura e vídeo enviados com sucesso!');
+          form.reset();
+          removerVideo();
+        } else {
+          alert('Erro no servidor: ' + result.message);
         }
-
-        const uploadUrl = initResult.uploadUrl;
-
-        // STEP 2: Transmite o arquivo direto aos servidores do Google Drive via XMLHttpRequest com progresso
-        await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('PUT', uploadUrl, true);
-          xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
-
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const percent = Math.round((event.loaded / event.total) * 100);
-              submitBtn.textContent = `Enviando vídeo: ${percent}%`;
-            }
-          };
-
-          xhr.onload = () => {
-            if (xhr.status === 200 || xhr.status === 201) {
-              const res = JSON.parse(xhr.responseText);
-              resolve(res.id);
-            } else {
-              reject(new Error('Falha no upload do vídeo para o Drive. Status: ' + xhr.status));
-            }
-          };
-
-          xhr.onerror = () => reject(new Error('Erro de conexão durante o envio.'));
-          xhr.send(file);
-        }).then(async (driveFileId) => {
-          submitBtn.textContent = 'Finalizando candidatura...';
-
-          // STEP 3: Notifica o script para enviar o e-mail de confirmação
-          const finalResponse = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'finalizeUpload',
-              fileId: driveFileId,
-              fullname: fullname,
-              series: series,
-              role: role
-            })
-          });
-
-          const finalResult = await finalResponse.json();
-
-          if (finalResult.status === 'success') {
-            alert('Candidatura e vídeo enviados com sucesso!');
-            form.reset();
-            removerVideo();
-          } else {
-            throw new Error(finalResult.message);
-          }
-        });
 
       } catch (err) {
         console.error(err);
-        alert('Erro no envio: ' + err.message);
+        alert('Erro no envio do formulário. Tente novamente.');
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar Candidatura';
       }
     });
   }
+});
+
+const fileToBase64 = file => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result.split(',')[1]);
+  reader.onerror = error => reject(error);
 });
