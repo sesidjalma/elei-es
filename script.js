@@ -93,27 +93,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Processando vídeo para envio...';
+      submitBtn.textContent = 'A preparar vídeo... Aguarde';
 
       try {
-        // Converte o vídeo para Base64 de forma eficiente
         const base64Video = await fileToBase64(file);
 
-        submitBtn.textContent = 'Enviando candidatura e vídeo... Aguarde.';
+        submitBtn.textContent = 'A enviar candidatura e vídeo... Pode demorar alguns segundos.';
 
-        const payload = {
-          fullname: document.getElementById('fullname').value,
-          series: document.getElementById('series').value,
-          role: document.getElementById('role').value,
-          videoName: file.name,
-          mimeType: file.type || 'video/mp4',
-          videoData: base64Video
-        };
+        // Utilização de URLSearchParams para envio nativo compatível com Apps Script
+        const formData = new URLSearchParams();
+        formData.append('fullname', document.getElementById('fullname').value);
+        formData.append('series', document.getElementById('series').value);
+        formData.append('role', document.getElementById('role').value);
+        formData.append('videoName', file.name);
+        formData.append('mimeType', file.type || 'video/mp4');
+        formData.append('videoData', base64Video);
 
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: formData.toString()
         });
 
         const result = await response.json();
@@ -128,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         console.error(err);
-        alert('Erro no envio do formulário. Tente novamente.');
+        alert('Ocorreu um erro no envio. Verifique a sua ligação e tente novamente.');
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar Candidatura';
