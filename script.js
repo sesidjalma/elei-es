@@ -24,7 +24,6 @@ function verificarPrazo() {
   return true;
 }
 
-// Elementos do DOM
 let fileInput, fileMsg, videoPreview, videoPreviewWrapper, removeVideoBtn, removePreviewBtn, form;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzGt5CZM5_qGSp8eG2zCUjmfgkrpjwnc7OH-ZNHoMbrEXOX5NpjY88CjZoT6-pLg8W1/exec';
 
-  // Função para limpar o campo de vídeo
   function removerVideo() {
     if (fileInput) fileInput.value = '';
     if (fileMsg) fileMsg.textContent = 'Clique ou arraste seu arquivo de vídeo aqui (MP4, MOV)';
@@ -49,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (removeVideoBtn) removeVideoBtn.style.display = 'none';
   }
 
-  // Evento ao alterar o arquivo
   if (fileInput) {
     fileInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
@@ -65,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Eventos para remover vídeo nos cliques do X
   if (removeVideoBtn) {
     removeVideoBtn.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -79,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Envio do formulário
   if (form) {
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -98,50 +93,92 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando vídeo para o Drive... Aguarde.';
+      submitBtn.textContent = 'Iniciando conexão super rápida...';
 
       try {
-        const base64Video = await fileToBase64(file);
+        const fullname = document.getElementById('fullname').value;
+        const series = document.getElementById('series').value;
+        const role = document.getElementById('role').value;
 
-        const payload = {
-          fullname: document.getElementById('fullname').value,
-          series: document.getElementById('series').value,
-          role: document.getElementById('role').value,
-          videoName: file.name,
-          mimeType: file.type,
-          videoData: base64Video
-        };
-
-        const response = await fetch(SCRIPT_URL, {
+        // STEP 1: Solicita URL de upload direto ao Apps Script
+        const initResponse = await fetch(SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            action: 'getUploadUrl',
+            fullname: fullname,
+            role: role,
+            videoName: file.name,
+            mimeType: file.type || 'video/mp4'
+          })
         });
 
-        const result = await response.json();
+        const initResult = await initResponse.json();
 
-        if (result.status === 'success') {
-          alert('Candidatura enviada e vídeo salvo com sucesso no Drive!');
-          form.reset();
-          removerVideo();
-        } else {
-          alert('Erro ao enviar para o Drive: ' + result.message);
+        if (initResult.status === 'error') {
+          throw new Error(initResult.message);
         }
+
+        const uploadUrl = initResult.uploadUrl;
+
+        // STEP 2: Transmite o arquivo direto aos servidores do Google Drive via XMLHttpRequest com progresso
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', uploadUrl, true);
+          xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              submitBtn.textContent = `Enviando vídeo: ${percent}%`;
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status === 200 || xhr.status === 201) {
+              const res = JSON.parse(xhr.responseText);
+              resolve(res.id);
+            } else {
+              reject(new Error('Falha no upload do vídeo para o Drive. Status: ' + xhr.status));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Erro de conexão durante o envio.'));
+          xhr.send(file);
+        }).then(async (driveFileId) => {
+          submitBtn.textContent = 'Finalizando candidatura...';
+
+          // STEP 3: Notifica o script para enviar o e-mail de confirmação
+          const finalResponse = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'finalizeUpload',
+              fileId: driveFileId,
+              fullname: fullname,
+              series: series,
+              role: role
+            })
+          });
+
+          const finalResult = await finalResponse.json();
+
+          if (finalResult.status === 'success') {
+            alert('Candidatura e vídeo enviados com sucesso!');
+            form.reset();
+            removerVideo();
+          } else {
+            throw new Error(finalResult.message);
+          }
+        });
 
       } catch (err) {
         console.error(err);
-        alert('Ocorreu um erro ao tentar enviar o formulário.');
+        alert('Erro no envio: ' + err.message);
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar Candidatura';
       }
     });
   }
-});
-
-const fileToBase64 = file => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => resolve(reader.result.split(',')[1]);
-  reader.onerror = error => reject(error);
 });
